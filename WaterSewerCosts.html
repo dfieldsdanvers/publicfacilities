@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+<style>
+#chartContainer {    
+    float: left;
+	top:10px;
+	left:10px;
+	width:100%;
+	height: 450px;
+	background-color: #F0EDE5;
+}
+.textclasshead {
+  float: center;
+  font-family: 'Trebuchet MS', 'Lucida Grande', 'Lucida Sans Unicode', 'Lucida Sans', Tahoma, sans-serif;
+    font-size: 14px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 15.4px;
+  text-align: center;
+  color: #18181A;
+  }
+  .textclass {
+  float: left;
+  font-family: sans-serif;
+    font-size: 12px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 400;
+	line-height: 18px;
+  color: #18181A;
+  }
+</style>
+</head>
+<body bgcolor="#F0EDE5";>
+<div class="textclasshead">Water and Sewer Charges</div><br>
+<div class="textclass">This chart depicts average annual water and sewer costs for Danvers (shown in red) and municipalities in its peer group. The size of the bubble relates to the average utility cost (combined water and sewer cost) expressed as a percentage of household income for that municipality. Municipalities can be turned off by clicking the legend at the right. Hover over the bubbles for more information</div> 
+<div id="chartContainer"></div>
+<div class="textclass"; width="100%"; height="400px";>Together, water and sewer charges in Danvers make up 1.96% of the median houshold income of an average Danvers household. This cost to Danvers residents, on a percentage basis, is slightly higher than the median percentage for this peer group (1.74%), but significantly lower than some communities, like Belmont, Reading, and Wakefield, which are over 2% and have higher household incomes on average.</div>
+<script type="text/javascript">
+    var svg = dimple.newSvg("#chartContainer", "100%", "100%");
+    d3.csv("https://raw.githubusercontent.com/dfieldsdanvers/publicfacilities/gh-pages/WaterSewerCosts.csv", function (data) {
+     var myChart = new dimple.chart(svg, data);
+        myChart.setBounds("10%", "5%", "50%", "82%")
+        var x = myChart.addMeasureAxis("x", "Average Sewer Cost");
+        var y = myChart.addMeasureAxis("y", "Average Water Cost");
+		var z = myChart.addMeasureAxis("z", "Utility Cost % Household Income");
+        x.overrideMax = 1400;
+		x.tickFormat = '$,.0f';
+	    x.fontSize = "12px";
+		y.overrideMax = 1200;
+		y.tickFormat = '$,.0f';
+	    y.fontSize = "12px";
+		var s = myChart.addSeries("Municipality", dimple.plot.bubble);
+		s.addOrderRule("Municipality");
+		myChart.assignColor("Danvers", "red", "red", 1);
+        var LineLegend = myChart.addLegend ("80%", "15%", "10%", "90%", "right");
+	    LineLegend.fontSize = "auto";
+		var LineStoryboard = myChart.setStoryboard("Municipality");
+		LineStoryboard.categoryFields = [null];
+		myChart.draw();
+		LineStoryboard.storyLabel.remove();
+        myChart.legends = [];
+        var filterValues = dimple.getUniqueValues(data, "Municipality");
+        LineLegend.shapes.selectAll("rect")
+          .on("click", function (e) {
+            var hide = false;
+            var newFilters = [];
+            filterValues.forEach(function (f) {
+              if (f === e.aggField.slice(-1)[0]) {
+                hide = true;
+              } else {
+                newFilters.push(f);
+              }
+            });
+            if (hide) {
+              d3.select(this).style("opacity", 0.2);
+            } else {
+              newFilters.push(e.aggField.slice(-1)[0]);
+              d3.select(this).style("opacity", 0.8);
+            }
+            filterValues = newFilters;
+            myChart.data = dimple.filterData(data, "Municipality", filterValues);
+			d3.selectAll("circle").style("stroke-width", 2);
+            myChart.draw(800);
+			
+          });
+		  window.onresize = function resize () {
+    myChart.draw(0, true);
+   };
+      });
+   
+  </script>
+  </body>
+  </html>
